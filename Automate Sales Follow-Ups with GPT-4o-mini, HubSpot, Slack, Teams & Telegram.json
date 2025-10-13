@@ -1,0 +1,353 @@
+{
+  "name": "Automate Sales Follow-Ups with GPT-4o-mini, HubSpot, Slack, Teams & Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "contact_name",
+              "value": "John Doe"
+            },
+            {
+              "name": "context",
+              "value": "had a product demo yesterday and showed strong interest in our enterprise features"
+            },
+            {
+              "name": "Email",
+              "value": "john.doe@example.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f390af8e-7d56-4805-97c9-e086ce226e1f",
+      "name": "📝 Set Sample Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        272,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_SLACK_CHANNEL_ID",
+          "cachedResultName": "general"
+        },
+        "text": "=📞 Follow-up Reminder\n\n**Contact:** {{ $('📝 Set Sample Data').item.json.contact_name }}\n**Context:** {{ $('📝 Set Sample Data').item.json.context }}\n\n**Suggested Message:**\n{{ $json.output }}",
+        "otherOptions": {}
+      },
+      "id": "4d5bd2fb-ff96-4669-bc2c-8d997b520513",
+      "name": "💬 Slack Reminder",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1088,
+        192
+      ],
+      "webhookId": "YOUR_WEBHOOK_ID",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a short, professional follow-up message for {{ $json.properties.firstname }} {{ $json.properties.lastname }}, who {{ $('📝 Set Sample Data').item.json.context }}.\n\nThe tone should be friendly, personalized, and reference the previous interaction.\n\nClearly suggest relevant next steps (e.g., scheduling a call, sharing resources, or continuing the discussion).\n\nKeep it under 150 words.\n\nAt the end of the message, include this signature block exactly as written (no placeholders):\n\nBest regards,  \n[Your Name]  \n[Your Title] | [Your Company]  \n📧 [your.email@company.com]\n\nReturn only the final message, fully ready to send, with no extra notes or placeholders.",
+        "options": {}
+      },
+      "id": "c10809e4-c036-40be-8b3c-9337b9bb58b9",
+      "name": "🤖 Generate Follow-up Message",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        720,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "search",
+        "returnAll": true,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "value": "={{ $json.Email }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "3c85faff-f986-4270-a64a-26809d0b7fa5",
+      "name": "🔗 HubSpot Contact Lookup",
+      "type": "n8n-nodes-base.hubspot",
+      "position": [
+        496,
+        288
+      ],
+      "typeVersion": 2.1
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "id": "479febc3-eed7-4b54-a7aa-0edfc19ef464",
+      "name": "🤖 AI Language Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        800,
+        608
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "boardId": "YOUR_MONDAY_BOARD_ID"
+      },
+      "id": "ad5184f4-b874-466b-a7b9-8060335f38a1",
+      "name": "📋 Monday Contact Fetch",
+      "type": "n8n-nodes-base.mondayCom",
+      "position": [
+        496,
+        496
+      ],
+      "typeVersion": 1,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "chatId": "YOUR_TELEGRAM_CHAT_ID",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "f11f4265-68c9-4c15-b0ea-fce0f9534a88",
+      "name": "💬 Telegram Reminder",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        1088,
+        400
+      ],
+      "webhookId": "YOUR_TELEGRAM_WEBHOOK_ID",
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "teamId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_TEAMS_ID"
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "YOUR_TEAMS_CHANNEL_ID"
+        },
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "id": "d604d9b3-39ee-48a5-9a03-08795bb7f9e7",
+      "name": "💬 Teams Reminder",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "position": [
+        1088,
+        592
+      ],
+      "webhookId": "YOUR_TEAMS_WEBHOOK_ID",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "content": "### 📹 Input & Context Setup\n\n*The workflow begins with a Schedule Trigger and a Set Sample Data node.\n\nThis stage is responsible for defining the contact's name, email, and context of the last interaction (e.g., demo, interest in features).\n\nThese details act as the base input for HubSpot search and AI generation.*",
+        "height": 700,
+        "width": 440,
+        "color": 3
+      },
+      "id": "a0edcef4-5229-4a91-af52-627a722930f3",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -32,
+        48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 📹 Contact Enrichment (HubSpot & CRM)\n\n*The HubSpot Contact Lookup node searches CRM records by email.\n\n(Optional/Disabled) Monday.com Contact Fetch could be used.*",
+        "height": 700,
+        "width": 220,
+        "color": 2
+      },
+      "id": "68f6d3cd-9a81-4075-8fe6-8c284ecaae58",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        432,
+        48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 📹 AI Follow-Up Message Generation\n\n*AI Language Model (OpenAI) provides the underlying model.\n\nGenerate Follow-Up Message node creates a short, professional, and personalized sales follow-up email.\n\nThe AI references past interactions (from context) and includes a predefined signature block for consistency.*",
+        "height": 700,
+        "width": 320,
+        "color": 4
+      },
+      "id": "fa9381b2-6f85-47f7-8660-53d456f85aa7",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        672,
+        48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "### 📹 Multi-Channel Communication\n\n*The generated message is shared via Slack, Telegram, and Teams, ensuring cross-platform visibility and no missed follow-ups*",
+        "height": 700,
+        "width": 300,
+        "color": 5
+      },
+      "id": "28d16950-ea33-4ac8-8382-f5e63026c381",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1008,
+        48
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "id": "06bb3ab2-f6c6-4f42-b31e-07af82de2e20",
+      "name": "🕐 Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        48,
+        400
+      ],
+      "typeVersion": 1.2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "📝 Set Sample Data": {
+      "main": [
+        [
+          {
+            "node": "🔗 HubSpot Contact Lookup",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📋 Monday Contact Fetch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🕐 Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "📝 Set Sample Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 AI Language Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "🤖 Generate Follow-up Message",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Monday Contact Fetch": {
+      "main": [
+        [
+          {
+            "node": "🤖 Generate Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔗 HubSpot Contact Lookup": {
+      "main": [
+        [
+          {
+            "node": "🤖 Generate Follow-up Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Generate Follow-up Message": {
+      "main": [
+        [
+          {
+            "node": "💬 Slack Reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💬 Telegram Reminder",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "💬 Teams Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9c1dacbf-5388-4cec-a286-1affd4fa58ba",
+  "meta": {
+    "instanceId": "73e6e68d600578e38dfa5246e126a4eaa956016fba999db3c59eb3285896408c"
+  },
+  "id": "tFY6dTBdNsAO1FPn",
+  "tags": []
+}
