@@ -1,0 +1,877 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "59ee0f4d-5190-46a9-81bd-b87bdfa0a9d1",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        352,
+        208
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Please research these sales call attendees\n\nName: {{ $json.Name }}\nEmail: {{ $json.Email }}\nCompany Name: {{ $json['Company Name'] }}\nWebsite: {{ $json.Website }}\nBusiness Type: {{ $json['Business Type'] }}\nProject: {{ $json.Project }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# Overview  \nYou are an AI agent responsible for gathering company data and updating a Google Sheet with structured output.  \n\n## Context  \n- After generating output, you must call the **Update Sheet** tool with six specific fields.  \n- Do not skip this step or simply return JSON. The tool must be called explicitly to trigger the Google Sheet update.  \n\n## Instructions  \n1. Accept and parse the input fields.  \n2. Use the **Tavily** tool to gather and summarize:  \n   - `company_overview`  \n   - `tech_stack`  \n   - `company_updates`  \n3. Use the **Product List** tool to identify:  \n   - `primary_solution`  \n   - `solution_2`  \n   - `solution_3`  \n4. Format all results as valid JSON with exactly six fields.  \n5. Immediately call the **Update Sheet** tool using the structure shown below.  \n\n## Tools  \n- **Tavily**: Use to research company background, tech stack, and updates.  \n- **Product List**: Use to find relevant products based on business type and project.  \n- **Update Sheet**: Required to write the six outputs into Google Sheets.  \n\n## Examples  \n### Example Input  \n```json\n{\n  \"Name\": \"Acme Inc.\",\n  \"Website\": \"https://www.acme.com\",\n  \"Business Type\": \"E-commerce\",\n  \"Project\": \"Streamlining logistics with automation\"\n}\n```  \n\n### Example Tavily Summary  \n```json\n{\n  \"company_overview\": \"Acme Inc. is a fast-scaling e-commerce company focused on home goods and lifestyle products.\",\n  \"tech_stack\": \"Shopify, Klaviyo, ShipBob, Gorgias\",\n  \"company_updates\": \"Recently launched a same-day delivery program in select cities and expanded product categories in Q2.\"\n}\n```  \n\n### Example Product List Result  \n```json\n{\n  \"primary_solution\": \"Logistics Automation Suite\",\n  \"solution_2\": \"Customer Retention AI\",\n  \"solution_3\": \"Real-Time Order Tracking\"\n}\n```  \n\n### Example Tool Call  \n```json\n{\n  \"tool_call\": {\n    \"tool\": \"Update Sheet\",\n    \"parameters\": {\n      \"company_overview\": \"Acme Inc. is a fast-scaling e-commerce company focused on home goods and lifestyle products.\",\n      \"tech_stack\": \"Shopify, Klaviyo, ShipBob, Gorgias\",\n      \"company_updates\": \"Recently launched a same-day delivery program in select cities and expanded product categories in Q2.\",\n      \"primary_solution\": \"Logistics Automation Suite\",\n      \"solution_2\": \"Customer Retention AI\",\n      \"solution_3\": \"Real-Time Order Tracking\"\n    }\n  }\n}\n```  \n\n## SOP (Standard Operating Procedure)  \n1. Parse and validate input fields.  \n2. Use Tavily to collect:  \n   - company_overview  \n   - tech_stack  \n   - company_updates  \n3. Use Product List to determine:  \n   - primary_solution  \n   - solution_2  \n   - solution_3  \n4. Combine results into a valid JSON object using exact field names.  \n5. Call the Update Sheet tool using that object.  \n\n## Final Notes  \n- Return only valid JSON — no extra text or descriptions.  \n- Always include all six fields, even if data is limited.  \n- Use of the Update Sheet tool is mandatory to complete the task.  \n---\n"
+        }
+      },
+      "id": "b339d530-fbae-46f4-9835-c0b24ad6212e",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        984,
+        208
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1",
+          "cachedResultName": "gpt-4.1"
+        },
+        "options": {}
+      },
+      "id": "3501df40-c2b7-44e2-8948-6593ecc640fb",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        800,
+        432
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "kbNtugBR2qcBMNxC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "toolDescription": "Use this tool to search the internet",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n    \"api_key\": \"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\",\n    \"query\": \"{searchTerm}\",\n    \"search_depth\": \"basic\",\n    \"include_answer\": true,\n    \"topic\": \"news\",\n    \"include_raw_content\": true,\n    \"max_results\": 3\n} ",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "searchTerm",
+              "description": "What the user has requested to search the internet for",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "c02b2157-136d-482b-b451-b7c51d397e86",
+      "name": "Tavily",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "position": [
+        928,
+        432
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit?usp=drivesdk",
+          "cachedResultName": "Mock Data"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1986928329,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit#gid=1986928329",
+          "cachedResultName": "Products"
+        },
+        "options": {}
+      },
+      "id": "41ccfbb9-1692-400b-a365-080b04fa17a7",
+      "name": "Product List",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "position": [
+        1056,
+        432
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sbQ7zKp0cMVeJHHZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit?usp=drivesdk",
+          "cachedResultName": "Mock Data"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 236449331,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit#gid=236449331",
+          "cachedResultName": "Meeting Data"
+        },
+        "columns": {
+          "value": {
+            "Email": "={{ $json.Email }}",
+            "solution_2": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('solution_2', ``, 'string') }}",
+            "solution_3": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('solution_3', ``, 'string') }}",
+            "tech_stack": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('tech_stack', ``, 'string') }}",
+            "company_updates": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('company_updates', ``, 'string') }}",
+            "company_overview": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('company_overview', ``, 'string') }}",
+            "primary_solution": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('primary_solution', ``, 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "Call Date",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Call Date",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Company Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Website",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Business Type",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Project",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_overview",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "company_overview",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tech_stack",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "tech_stack",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_updates",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "company_updates",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "primary_solution",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "primary_solution",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "solution_2",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "solution_2",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "solution_3",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "solution_3",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_subject",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "email_subject",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_text",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "email_text",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sms",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "sms",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Email"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "79369639-b6f6-486e-8fb2-212c287ea54d",
+      "name": "Update Sheet",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "position": [
+        1184,
+        432
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sbQ7zKp0cMVeJHHZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"company_overview\": \"string (max 100 tokens)\",\n  \"tech_stack\": [\"string\", \"string\", \"...\"],\n  \"company_updates\": \"string (max 150 tokens)\",\n  \"primary_solution\": \"string\",\n  \"solution_2\": \"string\",\n  \"solution_3\": \"string\"\n}\n"
+      },
+      "id": "919c36ba-b5da-4cba-a8a0-eb13c7feaf7f",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1312,
+        432
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Name: {{ $('Review Calls').item.json.Name }}\nEmail: {{ $('Review Calls').item.json.Email }}\nCompany Name: {{ $('Review Calls').item.json['Company Name'] }}\nWebsite: {{ $('Review Calls').item.json.Website }}\nBusiness Type: {{ $('Review Calls').item.json['Business Type'] }}\nProject: {{ $('Review Calls').item.json.Project }}\ncompany_overview: {{ $json.output.company_overview }}\ntech_stack: {{ $json.output.tech_stack }}\ncompany_updates: {{ $json.output.company_updates }}\nprimary_solution: {{ $json.output.primary_solution }}\nsolution_2: {{ $json.output.solution_2 }}\nsolution_3: {{ $json.output.solution_3 }}\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# Overview  \nYou are a Sales Writing Assistant AI agent responsible for generating a short, personal, and persuasive email, subject line, and SMS right after a prospect books a call. The format must feel handcrafted and human, while integrating strong personalization and a sharp testimonial to build conviction fast.  \n\n## Context  \n- The prospect should feel like the message was written specifically for them—not templated or generic.  \n- The core structure focuses on one key problem they face, followed by immediate proof that we’ve solved that problem for someone just like them.  \n- Messaging must be short, clean, confident, and natural—written like a thoughtful sales rep, not a marketer.  \n- SMS should be simple, friendly, and casual.  \n- Final output must also be logged in a Google Sheet.  \n\n## Instructions  \n1. Analyze the input fields to identify:  \n   - Prospect’s first name, company, business type, and project  \n   - Their specific pain point or goal  \n   - Tech stack or approach they’re using to solve it  \n2. Use the Testimonials Tool to find a success story with a company similar in size, industry, or problem. Pull:  \n   - Company name  \n   - Business type  \n   - Specific result  \n   - Outcome  \n   - Solution used  \n3. Draft a subject line like:  \n   - “Excited to connect, (first name)”  \n4. Write the email using the following exact structure and voice:  \n   ```\n   Subject: Excited to connect, (first name)\n\n   Hey (first name),\n\n   Saw your booking—excited to dive in on (meeting date).\n\n   Automating (problem/project) is right in our wheelhouse. We actually just helped (testimonial first name) who owns (testimonial business name/type) [achieve similar outcome] and (outcome)—just by (solution).\n\n   Looking forward to showing you what’s possible.\n\n   – Nolan\n   ```\n5. Draft the SMS message using this format:  \n   - “Hey (first name)! Nolan from Agent Stack here—just saw your appointment come through. Pumped to hear more about (project details). See you on (meeting day/date)!”  \n6. Output must include:  \n   - Subject  \n   - Email  \n   - Text Message  \n\n## Tools  \n- Testimonials Tool: For pulling relevant proof points  \n- Email Agent: For formatting and polishing  \n- Update Sheets 2: To store outputs  \n\n## Examples  \n- **Output Subject:**  \n  Excited to connect, Jason  \n\n- **Output Email:**  \n  Hey Jason,  \n\n  Saw your booking—excited to dive in on Thursday.  \n\n  Automating custom proposal workflows is right in our wheelhouse. We actually just helped Vibe Studios who runs a creative agency cut 12+ hrs/week of manual drafting and boost proposal output by 4x—just by automating creative packaging from content requests.  \n\n  Looking forward to showing you what’s possible.  \n\n  – Nolan  \n\n- **Output Text Message:**  \n  Hey Jason! Nolan from Agent Stack here—just saw your appointment come through. Pumped to hear more about your proposal automation plans. See you on Thursday!  \n\n## SOP (Standard Operating Procedure)  \n1. Parse all inputs and identify:  \n   - Name  \n   - Specific problem or goal  \n   - Relevant testimonial  \n2. Draft:  \n   - Subject line using first name  \n   - Email using the provided structure and tone  \n   - SMS with natural tone  \n3. Output fields:  \n   - Output Subject  \n   - Output Email  \n   - Output Text Message  \n4. Use Update Sheets 2 to store the following:  \n   - Name  \n   - Email  \n   - Company Name  \n   - Subject  \n   - Email Body  \n   - SMS Message  \n\n## Final Notes  \n- Use clean, minimal formatting—no fluff, no pitchy language.  \n- The testimonial is central—tie it directly to the prospect’s challenge.  \n- The tone should sound like a proactive, thoughtful rep who did their homework.  \n---\n\n"
+        }
+      },
+      "id": "fa019473-fe43-477d-bdf0-dbcb703f2c2e",
+      "name": "Sales Writing Assistant",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "position": [
+        1640,
+        208
+      ],
+      "typeVersion": 1.9
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit?usp=drivesdk",
+          "cachedResultName": "Mock Data"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 236449331,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit#gid=236449331",
+          "cachedResultName": "Meeting Data"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "company_overview",
+              "lookupValue": "FILL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3eb44940-e9c5-4e61-9b19-e780c1e0ca74",
+      "name": "Review Calls",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        576,
+        208
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sbQ7zKp0cMVeJHHZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1",
+          "cachedResultName": "gpt-4.1"
+        },
+        "options": {}
+      },
+      "id": "24091fc7-fdf3-46d7-ae6e-700b276f688a",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "position": [
+        1520,
+        432
+      ],
+      "typeVersion": 1.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "kbNtugBR2qcBMNxC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit?usp=drivesdk",
+          "cachedResultName": "Mock Data"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 2060485763,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit#gid=2060485763",
+          "cachedResultName": "Success Stories"
+        },
+        "options": {}
+      },
+      "id": "1021df58-4b51-4934-938d-1a7fe3656744",
+      "name": "Testimonials Tool",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "position": [
+        1776,
+        432
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sbQ7zKp0cMVeJHHZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": {\n      \"type\": \"string\",\n      \"description\": \"The subject line of the confirmation email\"\n    },\n    \"email\": {\n      \"type\": \"string\",\n      \"description\": \"The full content of the confirmation email\"\n    },\n    \"text_message\": {\n      \"type\": \"string\",\n      \"description\": \"The full content of the confirmation SMS message\"\n    }\n  },\n  \"required\": [\"subject\", \"email\", \"text_message\"]\n}\n"
+      },
+      "id": "a61a8116-c575-4711-9368-209d6df0a7eb",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1904,
+        432
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit?usp=drivesdk",
+          "cachedResultName": "Mock Data"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 236449331,
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4/edit#gid=236449331",
+          "cachedResultName": "Meeting Data"
+        },
+        "columns": {
+          "value": {
+            "sms": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('sms', ``, 'string') }}",
+            "Email": "={{ $('Review Calls').item.json.Email }}",
+            "email_text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email_text', ``, 'string') }}",
+            "email_subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('email_subject', ``, 'string') }}"
+          },
+          "schema": [
+            {
+              "id": "Call Date",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Call Date",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Company Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Website",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Business Type",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Business Type",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Project",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "Project",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_overview",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "company_overview",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tech_stack",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "tech_stack",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "company_updates",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "company_updates",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "primary_solution",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "primary_solution",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "solution_2",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "solution_2",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "solution_3",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "required": false,
+              "displayName": "solution_3",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_subject",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "email_subject",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email_text",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "email_text",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sms",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "sms",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "row_number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Email"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "d80e4986-d73b-4dad-a068-9fbf5ff15e86",
+      "name": "Update Sheets 2",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "position": [
+        1648,
+        432
+      ],
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "sbQ7zKp0cMVeJHHZ",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "### 🚀 How It Works\n\n• Starts when a new sales call is booked (or triggered manually during testing).\n• Retrieves prospect information from Google Sheets and performs an automated deep-dive into their company, technology stack, and other key data via Tavily.\n• Automatically finds the most relevant products or solutions from your list and updates the sheet accordingly.\n• Crafts personalized email confirmations (subject line + body) and SMS messages, leveraging customer testimonials for extra impact.\n• Saves all outreach content directly into your Google Sheet for easy access and follow-up.\n\n⏱️ Total setup time: ~10–15 minutes\n👉 All nodes come pre-configured—just adjust the credentials and input fields as needed. Helpful notes (like prompt customization tips) are available in sticky notes inside the workflow.",
+        "height": 304,
+        "width": 640,
+        "color": 3
+      },
+      "id": "5828568a-a319-4b37-b0b6-c72c8c411b66",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        624
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "###  ⚙️ Outreach Genie Setup: Automate Prospect Research & Tailored Outreach for Sales Calls\n\n\n🚀 How to Get Started:\n\nSet Up Your Google Sheets\n\nConnect your Google account via OAuth2 for nodes like \"Review Calls\", \"Product List\", \"Testimonials Tool\", \"Update Sheet\", and \"Update Sheets 2\".\n\nMake a copy of this sample Google Sheet (ID: 1u3WMJwYGwZewW1IztY8dfbEf5yBQxVh8oH7LQp4rAk4) to your Google Drive.\n\nUpdate all documentId references in the Google Sheets nodes with your copy’s ID.\n\nMake sure your sheet includes tabs named \"Meeting Data\", \"Products\", and \"Success Stories\" filled with your info.\n⏱️ Estimated time: ~5 minutes\n\nAdd Your OpenAI API Key\n\nHead over to OpenAI Platform\n and generate an API key.\n\nInsert your key in the credentials fields for both \"OpenAI Chat Model\" nodes.\n⏱️ Estimated time: ~2 minutes\n\nConfigure Tavily Integration\n\nSign up at Tavily\n and get your API key.\n\nIn the \"Tavily\" node, replace the sample api_key value in the JSON body with your own key.\n⏱️ Estimated time: ~3 minutes",
+        "height": 768,
+        "width": 464,
+        "color": 4
+      },
+      "id": "01a1dfe3-2570-4987-870e-458bc6af46ad",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2032,
+        16
+      ],
+      "typeVersion": 1
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Tavily": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Sales Writing Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product List": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Calls": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheets 2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sales Writing Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testimonials Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Sales Writing Assistant",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Sales Writing Assistant",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Sales Writing Assistant",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Review Calls",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1e38ab9e-5a07-4c5a-84b4-9554868e5fa7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "73e6e68d600578e38dfa5246e126a4eaa956016fba999db3c59eb3285896408c"
+  },
+  "id": "9o70epT3FsfGOhpT",
+  "tags": []
+}
